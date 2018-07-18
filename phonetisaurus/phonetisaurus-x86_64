@@ -1,0 +1,7 @@
+#!/bin/bash
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+BIN_DIR=$DIR/bin/x86_64
+LIB_DIR=$DIR/lib/x86_64
+
+export LD_LIBRARY_PATH=$LIB_DIR:$LD_LIBRARY_PATH
+$BIN_DIR/phonetisaurus-g2p "$@"

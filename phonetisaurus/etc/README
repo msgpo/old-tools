@@ -1,0 +1,3 @@
+This is a finite state transducer for phonetisaurus.
+
+Built using the "Installing Phonetisaurus, m2m-aligner and MITLM" instructions from https://jasperproject.github.io/documentation/installation/
