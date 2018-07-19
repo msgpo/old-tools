@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container main-container">
+    <h1>Wake Word</h1>
+    <p>Wakes up your voice assistant.</p>
+    <img src="/img/wakeup.png">
+</div>
+
+<div class="container">
+    <p>
+        A <b>wake word</b> (or hot word) detector listens continuously for a
+        special word or phrase. Once this is heard, the voice assistant is
+        activated, and a more sophisticated speech-to-text system is engaged.
+    </p>
+    <p>
+        rhasspy uses pocketsphinx by default for wake word detection, but is
+        capable of using the other systems listed below:
+    </p>
+
+    <table class="table">
+        <thead class="thead-light">
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Pros</th>
+            <th scope="col">Cons</th>
+        </thead>
+        <tbody>
+            <tr>
+                <td><a href="https://github.com/cmusphinx/pocketsphinx">pocketsphinx</a></td>
+                <td>
+                    <p>CMU speech-to-text system with <em>keyword search</em> mode enabled.</p>
+                    <form class="form-inline" id="pocketsphinx-form">
+                        <input type="hidden" name="system" value="pocketsphinx">
+                        <input type="text" class="form-control" name="keyphrase" value="okay raspy">
+                        <button id="ps-submit" type="submit" class="btn btn-primary ml-3">Listen</button>
+                    </form>
+                </td>
+                <td>
+                    <ul>
+                        <li>Can use any word/phrase</li>
+                        <li>No training required</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Lowest accuracy</li>
+                        <li>Higher resource usage</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td><a href="https://snowboy.kitt.ai">snowboy</a></td>
+                <td>
+                    <p>A highly customizable, low resource, hotword detection engine.</p>
+                    <form class="form-inline" id="snowboy-form">
+                        <input type="hidden" name="system" value="snowboy">
+                        <select class="form-control" title="Model" name="model">
+                            {% for model_path in config['snowboy']['models'] %}
+                            <option value="{{ model_path }}">{{ basename(model_path) }}</option>
+                            {% endfor %}
+                        </select>
+                        <button id="sb-submit" type="submit" class="btn btn-primary ml-3">Listen</button>
+                    </form>
+                </td>
+                <td>
+                    <ul>
+                        <li>Highest accuracy</li>
+                        <li>Fast and easy to train</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Requires using 3rd party service</li>
+                        <li>System is a black box</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td><a href="https://github.com/mycroftai/mycroft-precise">mycroft-precise</a></td>
+                <td>
+                    <p>A lightweight, simple-to-use, RNN wake word listener.</p>
+                    <form class="form-inline" id="precise-form">
+                        <input type="hidden" name="system" value="precise">
+                        <select class="form-control" title="Model" name="model">
+                            {% for model_path in config['mycroft_precise']['models'] %}
+                            <option value="{{ model_path }}">{{ basename(model_path) }}</option>
+                            {% endfor %}
+                        </select>
+                        <button id="mp-submit" type="submit" class="btn btn-primary ml-3">Listen</button>
+                    </form>
+                </td>
+                <td>
+                    <ul>
+                        <li>Higher accuracy than pocketsphinx</li>
+                        <li>Can be trained offline</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Requires re-training for each wake word</li>
+                        <li>Needs many examples</li>
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+ $("#pocketsphinx-form").submit(function(ev) {
+     ev.preventDefault();
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/wake-word", true);
+     req.addEventListener("load", function(resp) {
+         if (req.status == 200) {
+             $("#ps-submit").removeClass("btn-primary");
+             $("#ps-submit").addClass("btn-danger");
+         } else {
+             // Show error text
+             alert(resp.target.responseText);
+         }
+     });
+
+     req.send(new FormData(document.getElementById("pocketsphinx-form")));
+ });
+
+ $("#snowboy-form").submit(function(ev) {
+     ev.preventDefault();
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/wake-word", true);
+     req.addEventListener("load", function(resp) {
+         if (req.status == 200) {
+             $("#sb-submit").removeClass("btn-primary");
+             $("#sb-submit").addClass("btn-danger");
+         } else {
+             // Show error text
+             alert(resp.target.responseText);
+         }
+     });
+
+     req.send(new FormData(document.getElementById("snowboy-form")));
+ });
+
+ $("#precise-form").submit(function(ev) {
+     ev.preventDefault();
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/wake-word", true);
+     req.addEventListener("load", function(resp) {
+         if (req.status == 200) {
+             $("#mp-submit").removeClass("btn-primary");
+             $("#mp-submit").addClass("btn-danger");
+         } else {
+             // Show error text
+             alert(resp.target.responseText);
+         }
+     });
+
+     req.send(new FormData(document.getElementById("precise-form")));
+ });
+
+ function poll() {
+     setTimeout(function() {
+         var req = new XMLHttpRequest();
+         req.open("GET", "/wake-status", true);
+         req.addEventListener("load", function(resp) {
+             if (req.status == 200) {
+                 data = JSON.parse(resp.target.responseText);
+                 Object.keys(data).forEach(function(system) {
+                     status = data[system];
+                     if (status == "detected") {
+                         console.log(system);
+                         if (system == "pocketsphinx") {
+                             $("#ps-submit").removeClass("btn-danger");
+                             $("#ps-submit").addClass("btn-success");
+                         } else if (system == "snowboy") {
+                             $("#sb-submit").removeClass("btn-danger");
+                             $("#sb-submit").addClass("btn-success");
+                         } else if (system == "precise") {
+                             $("#mp-submit").removeClass("btn-danger");
+                             $("#mp-submit").addClass("btn-success");
+                         }
+                     }
+                 });
+             }
+
+             poll();
+         });
+
+         req.send("");
+     }, 1000);
+ };
+
+ $(function() {
+     poll();
+ });
+
+</script>
+{% endblock %}

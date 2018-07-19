@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="/css/jquery.jsonview.min.css">
+        <link rel="stylesheet" href="/css/rhasspy.css">
+        {% block css %}
+        {% endblock %}
+
+        <title>rhasspy Voice Assistant</title>
+    </head>
+    <body>
+        <!-- Navigation bar -->
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+            <div class="navbar-container">
+                <img class="navbar-brand" src="/img/rhasspy.png">
+            </div>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsDefault" aria-controls="navbarsDefault" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarsDefault">
+                <ul class="navbar-nav mr-auto">
+                    {% set nav_items = [('', 'Home'),
+                                        ('wake-word', 'Wake'),
+                                        ('speech-to-text', 'Listen'),
+                                        ('intent-recognition', 'Intent'),
+                                        ('text-to-speech', 'Speak'),
+                                        ('about', 'About')] %}
+
+                    {% for page, text in nav_items %}
+                    <li class="navbar-item {% if page == current_page %} active {% else %} inactive {% endif %}">
+                        <a class="nav-link" href="/{{ page }}">{{ text }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Content -->
+        <main role="main">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <!-- Load Javascript libraries -->
+        <script src="/js/jquery-3.3.1.slim.min.js"></script>
+        <script src="/js/popper.min.js"></script>
+        <script src="/js/bootstrap.min.js"></script>
+        <script src="/js/recorder.js"></script>
+        <script src="/js/jquery.jsonview.min.js"></script>
+        {% block js %}
+        {% endblock %}
+    </body>
+</html>

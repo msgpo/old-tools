@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="jumbotron">
+    <div class="container">
+        <h1 class="display-3">Welcome to rhasspy!</h1>
+        <p>A free voice assistant toolkit for Home Assistant.</p>
+    </div>
+</div>
+
+<div class="container">
+    <form id="command-form">
+        <div class="row">
+            <div class="col-xs-auto">
+                <button type="button" id="train" class="btn btn-lg btn-warning" title="Retrain speech/intent recognizers">
+                    <i id="train-icon" class="fas fa-wrench"></i>
+                    <span class="ml-1">Train</span>
+                </button>
+            </div>
+            <div class="col-sm-auto">
+                <div class="btn-group">
+                    <button type="button" id="record" class="btn btn-lg btn-info" title="Record command from a microphone">
+                        <i class="fas fa-microphone"></i>
+                        <span class="ml-1">Listen</span>
+                    </button>
+                    <button type="button" class="btn btn-lg btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a id="user-only" class="dropdown-item active" href="#">User Only</a>
+                        <a id="base-user" class="dropdown-item" href="#">Base + User</a>
+                        <a id="base-only" class="dropdown-item" href="#">Base Only</a>
+                    </div>
+                </div>
+                <button type="button" id="upload" class="btn btn-info btn-lg" title="Upload WAV file">
+                    <i class="fas fa-upload"></i>
+                </button>
+            </div>
+            <div class="col-sm-auto">
+                <button type="button" id="speak" class="btn btn-lg btn-dark" title="Speak sentence">
+                    <i class="fas fa-comment"></i>
+                    <span class="ml-1">Speak</span>
+                </button>
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="text" name="text" placeholder="Type a sentence" value="">
+            </div>
+            <div class="col-sm-auto">
+                <button type="submit" id="run" class="btn btn-lg btn-success" title="Run command">
+                    <i class="fas fa-cog"></i>
+                    <span class="ml-1">Run</span>
+                </button>
+            </div>
+        </div>
+
+        <input type="hidden" id="lm" name="lm" value="user">
+        <input type="file" id="audio-file" accept="audio/*" hidden>
+    </form>
+
+    <div class="row mt-3 mx-auto bg-danger text-light p-2" id="response" hidden>
+        <i class="fas fa-exclamation-circle"></i>
+        <span class="ml-2" id="response-text">Empty response</span>
+    </div>
+
+    <div class="row mt-3">
+        <table id="intent-table" class="table" hidden>
+            <thead class="thead-light">
+                <th scope="col">Intent</th>
+                <th scope="col">Entities</th>
+                <th scope="col">Confidence</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="intent-name"></td>
+                    <td><ul id="intent-entities" class="list-unstyled"></ul></td>
+                    <td id="intent-confidence"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<hr />
+
+<div class="container main-container">
+    <div class="row">
+        <div class="col-md-3">
+            <h3>Wake Word</h3>
+            <p>Wakes up your voice assistant.</p>
+            <p><img src="/img/wakeup.png"></p>
+            <p><a class="btn btn-primary btn-lg" href="/wake-word" role="button">Learn More &raquo;</a></p>
+        </div>
+
+        <div class="col-md-3">
+            <h3>Speech-to-Text</h3>
+            <p>Converts your voice into text.</p>
+            <p><img src="/img/microphone.png"></p>
+            <p><a class="btn btn-primary btn-lg" href="/speech-to-text" role="button">Learn More &raquo;</a></p>
+        </div>
+
+        <div class="col-md-3">
+            <h3>Intent Recognition</h3>
+            <p>Figures out what you want to do.</p>
+            <p><img src="/img/intent.png"></p>
+            <p><a class="btn btn-primary btn-lg" href="/intent-recognition" role="button">Learn More &raquo;</a></p>
+        </div>
+
+        <div class="col-md-3">
+            <h3>Text-to-Speech</h3>
+            <p>Talking back to you.</p>
+            <p><img src="/img/speaker.png"></p>
+            <p><a class="btn btn-primary btn-lg" href="/text-to-speech" role="button">Learn More &raquo;</a></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+ var audio_ctx = null;
+ var recorder = null;
+ var recording = false;
+ var intents = null;
+
+ $("#command-form").submit(function(ev) {
+     ev.preventDefault();
+     runCommand();
+ });
+
+ function runCommand() {
+     $("#run").prop("disabled", true);
+
+     $("#response").prop("hidden", true);
+     $("#response-text").text("");
+
+     // Clear intent table
+     $("#intent-table").prop("hidden", true);
+     $("#intent-name").text("");
+     $("#intent-entities").empty();
+     $("#intent-confidence").text("");
+
+     // POST sentence to intent recognition endpoint
+     var req = new XMLHttpRequest();
+     req.open("POST", "/intent-recognition", true);
+     req.addEventListener("load", function(resp) {
+         $("#run").prop("disabled", false);
+
+         if (req.status == 200) {
+             // Response is rasa NLU intent JSON format
+             intents = JSON.parse(resp.target.responseText);
+             var intent = intents["intent"];
+
+             $("#intent-table").prop("hidden", false);
+             $("#intent-name").text(intent.name);
+             $("#intent-confidence").text(intent.confidence.toFixed(2));
+
+             // Show entities for top intent
+             intents.entities.forEach(function(ev) {
+                 var li = $("<li class='py-2'><span class='bg-dark text-light py-1 px-2'>" + ev.entity + "</span><span class='ml-2 text-info'>" + ev.value + "</span></li>");
+                 li.appendTo($("#intent-entities"));
+             });
+         } else {
+             // Show error text
+             $("#response").prop("hidden", false);
+             $("#response-text").text(resp.target.responseText);
+         }
+     });
+
+     var command = $("#text").val();
+     req.send(command);
+ };
+
+ $("#speak").click(function() {
+     $("#speak").prop("disabled", true);
+
+     $("#response").prop("hidden", true);
+     $("#response-text").text("");
+
+     // POST sentence to text-to-speech end point
+     var req = new XMLHttpRequest();
+     req.open("POST", "/text-to-speech", true);
+     req.addEventListener("load", function(resp) {
+         $("#speak").prop("disabled", false);
+
+         if (req.status != 200) {
+            $("#response").prop("hidden", false);
+            $("#response-text").text(resp.target.responseText);
+         }
+     });
+
+     req.send(new FormData(document.getElementById("command-form")));
+ });
+
+ $("#record").click(function() {
+     if (recorder == null) {
+         // Request microphone permissions
+         audio_ctx = new AudioContext();
+         navigator.mediaDevices.getUserMedia({audio: true})
+         .then(function(stream) {
+             var input = audio_ctx.createMediaStreamSource(stream);
+             recorder = new Recorder(input);
+             recordOrStop();
+         })
+     } else {
+         recordOrStop();
+     }
+ });
+
+ function recordOrStop() {
+     if (!recording) {
+         // Start recording
+         recording = true;
+         recorder.clear();
+         recorder.record();
+
+         $("#record:first span").text("Stop");
+         $("#record").addClass("btn-danger");
+         $("#record").removeClass("btn-info");
+     } else {
+         // Stop recording
+         recording = false;
+         recorder.stop();
+
+         // Export recording data
+         recorder.exportWAV(function(blob) {
+             sendRecording(blob, "microphone");
+         });
+
+         $("#record:first span").text("Listen");
+         $("#record").addClass("btn-info");
+         $("#record").removeClass("btn-danger");
+     }
+ }
+
+ function sendRecording(data, source) {
+     $("#text").val("");
+     $("#text").prop("placeholder", "Waiting for rhasspy...");
+
+     $("#response").prop("hidden", true);
+     $("#response-text").text("");
+
+     $("#record").prop("disabled", true);
+
+     var lm = $("#lm").val();
+
+     // POST WAV data to speech-to-text endpoint
+     var req = new XMLHttpRequest();
+     req.open("POST", "/speech-to-text?source=" + source + "&lm=" + lm, true);
+     req.addEventListener("load", function(resp) {
+         $("#text").prop("placeholder", "Type a sentence");
+         $("#record").prop("disabled", false);
+
+         if (req.status == 200) {
+             // Transcription
+             $("#text").val(resp.target.responseText);
+         } else {
+             // Show error text
+             $("#response").prop("hidden", false);
+             $("#response-text").text(resp.target.responseText);
+         }
+     });
+
+     req.send(data);
+ }
+
+ $("#upload").click(function() {
+     // Click the hidden file input control
+     $("#audio-file").click();
+ });
+
+ $("#audio-file").change(function() {
+     var file = $("#audio-file").prop("files")[0];
+     var reader = new FileReader();
+     reader.onloadend = function(f) {
+         sendRecording(reader.result, "wav");
+     };
+
+     reader.readAsArrayBuffer(file);
+ });
+
+ // Language Model
+ $("#user-only").click(function() {
+     $("#user-only").addClass("active");
+     $("#base-user").removeClass("active");
+     $("#base-only").removeClass("active");
+     $("#lm").val("user");
+ });
+
+ $("#base-user").click(function() {
+     $("#user-only").removeClass("active");
+     $("#base-user").addClass("active");
+     $("#base-only").removeClass("active");
+     $("#lm").val("mixed");
+ });
+
+ $("#base-only").click(function() {
+     $("#user-only").removeClass("active");
+     $("#base-user").removeClass("active");
+     $("#base-only").addClass("active");
+     $("#lm").val("base");
+ });
+
+ // Training
+ $("#train").click(function() {
+     $("#train").prop("disabled", true);
+     $("#train-icon").addClass("fa-spinner");
+     $("#train-icon").removeClass("fa-wrench");
+
+     $("#response").prop("hidden", true);
+     $("#response-text").text("");
+
+     // POST sentence to text-to-speech end point
+     var req = new XMLHttpRequest();
+     req.open("POST", "/train-speech-and-intent", true);
+     req.addEventListener("load", function(resp) {
+         $("#train").prop("disabled", false);
+         $("#train-icon").removeClass("fa-spinner");
+
+         if (req.status == 200) {
+             $("#train-icon").addClass("fa-check");
+         } else {
+             $("#train-icon").addClass("fa-wrench");
+             $("#response").prop("hidden", false);
+             $("#response-text").text(resp.target.responseText);
+         }
+     });
+
+     req.send("");
+ });
+
+</script>
+{% endblock %}

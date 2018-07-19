@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container main-container">
+    <h1>Speech-to-Text</h1>
+    <p>Converts your voice into text.</p>
+    <img src="/img/microphone.png">
+</div>
+
+<div class="container">
+    <p>
+        A <b>speech-to-text</b> system listens to someone speaking through a
+        microphone and tries to guess the exact words that were spoken. Accents,
+        different pronunciations, mistakes, and even humor make this a
+        <em>very</em> difficult problem.
+    </p>
+    <p>
+        rhasspy uses <a
+        href="https://github.com/cmusphinx/pocketsphinx">pocketsphinx</a> to
+        guess what command a user speaks. There are three important pieces of
+        this system that influence accuracy:
+
+        <ul>
+            <li>An acoustic model
+                <ul>
+                    <li>A model of how audio waveforms match sub-word speech elements (phonemes)</li>
+                    <li>rhasspy uses a pre-made acoustic model for English speakers</li>
+                </ul>
+            </li>
+            <li>A pronunciation dictionary
+                <ul>
+                    <li>A list of all known words and the ways they could be pronounced</li>
+                    <li>rhasspy uses both a large pre-made English dictionary and a small custom dictionary from the user</li>
+                </ul>
+            </li>
+            <li>A language model
+                <ul>
+                    <li>Statistics about which words likely follow other words in a sentence</li>
+                    <li>rhasspy generates its own language model from the intent recognizer's training phrases and mixes this with a large pre-made English model</li>
+                </ul>
+            </li>
+        </ul>
+    </p>
+</div>
+
+<hr>
+
+<div class="container">
+    <h2>Language Model and Dictionary</h2>
+
+    <div class="ht-3 mb-3">
+        <button id="button-retrain" type="button" class="btn btn-lg btn-primary">
+            <i id="train-spinner" class="fas fa-spinner" hidden></i>
+            <i id="train-check" class="fas fa-check" hidden></i>
+            <span class="ml-1">Re-Train Speech Recognizer</span>
+        </button>
+    </div>
+
+    <p>
+        In order to generate a language model, rhasspy gathers sentences from all
+        training example files. You should be able to find them here:
+
+        <ul>
+            {% for path in config['training']['example_files'] %}
+            <li><tt>{{ path }}</tt></li>
+            {% endfor %}
+        </ul>
+
+    </p>
+
+    <p>
+        These are stripped of entity tags and collected into <tt>{{ config['training']['user_sentences'] }}</tt>.
+    </p>
+
+    <p>
+        If any words in those sentences are not in a pronunciation dictionary,
+        rhasspy will guess their pronunciations and put them in <tt>{{ config['training']['unknown_dictionary'] }}</tt>.
+        You <b>must</b> put them into one of the dictionaries manually before
+        training can proceed.
+    </p>
+
+    <p>
+        Once all of the words are known, rhasspy generates a small language model
+        from the training phrases at <tt>{{ config['training']['user_language_model'] }}</tt>.
+        This small model is mixed with a large, pre-made English language model ({{ config['training']['mix_lambda'] * 100.0 }}%) from
+        <tt>{{ config['training']['base_language_model'] }}</tt>.
+    </p>
+
+    <p>
+        The final, mixed language model is stored in <tt>{{ config['training']['mixed_language_model'] }}</tt>.
+    </p>
+</div>
+
+<hr>
+
+<div class="container">
+    <h2>Pronunciations</h2>
+
+    <p>
+        When training, rhasspy is looking for pronunciation dictionaries in the following locations:
+        <ul>
+            {% for path in dictionary_files %}
+            <li><tt>{{ path }}</tt></li>
+            {% endfor %}
+        </ul>
+    </p>
+
+    <p>
+        The final pronunciation dictionary is located at <tt>{{ config['training']['mixed_dictionary'] }}</tt>.
+    </p>
+
+    <hr>
+
+    <p>
+        Type a word below to have rhasspy either look up its pronunciation(s) in
+        a dictionary or make an informed guess.
+    </p>
+
+    <form id="word-form" class="mt-3">
+        <div class="row">
+            <div class="col-xs-auto">
+                <i id="not-in-dict" class="fas fa-exclamation-circle" title="Not in dictionary" hidden></i>
+                <label for="pronounce-dict" class="col-form-label col-sm-1">Word:</label>
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="pronounce-dict" placeholder="Type a word">
+            </div>
+            <div class="col-xs-auto">
+                <button class="btn btn-success" id="lookup" type="submit" title="Look up word">
+                    <i class="fas fa-book"></i>
+                    <span class="ml-1">&raquo;</span>
+                </button>
+            </div>
+            <div class="col">
+                <select class="form-control" id="words">
+                    <option>No pronunciations</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <form id="pronounce-form">
+        <div class="row mt-3">
+            <div class="col-xs-auto">
+                <label for="pronounce-text" class="col-form-label col-sm-1">Phonemes:</label>
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="pronounce-text" placeholder="R AE S P IY">
+            </div>
+            <div class="col-sm-auto">
+                <button class="btn btn-lg btn-primary" type="submit">
+                    <i class="fas fa-comment"></i>
+                    <span class="ml-1">Pronounce</span>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row mt-3 mx-auto bg-danger text-light p-2" id="pronounce-response" hidden>
+        <i class="fas fa-exclamation-circle"></i>
+        <span class="ml-2" id="pronounce-response-text">Empty response</span>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col">
+            <p>
+                Pocketsphinx uses the following <b>phonemes</b> to describe how a
+                word is pronounced:
+            </p>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table">
+                <thead class="thead-light">
+                    <th scope="col">Phoneme</th>
+                    <th scope="col">Example</th>
+                    <th scope="col">Translation</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AA</td>
+                        <td>odd</td>
+                        <td><span class="text-danger">AA</span> D</td>
+                    </tr>
+                    <tr>
+                        <td>AE</td>
+                        <td>at</td>
+                        <td><span class="text-danger">AE</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>AH</td>
+                        <td>hut</td>
+                        <td>HH <span class="text-danger">AH</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>AO</td>
+                        <td>ought</td>
+                        <td><span class="text-danger">AO</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>AW</td>
+                        <td>cow</td>
+                        <td>K <span class="text-danger">AW</span></td>
+                    </tr>
+                    <tr>
+                        <td>AY</td>
+                        <td>hide</td>
+                        <td>HH <span class="text-danger">AY</span> D</td>
+                    </tr>
+                    <tr>
+                        <td>B</td>
+                        <td>be</td>
+                        <td><span class="text-danger">B</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>CH</td>
+                        <td>cheese</td>
+                        <td><span class="text-danger">CH</span> IY Z</td>
+                    </tr>
+                    <tr>
+                        <td>D</td>
+                        <td>dee</td>
+                        <td><span class="text-danger">D</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>DH</td>
+                        <td>thee</td>
+                        <td><span class="text-danger">DH</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>EH</td>
+                        <td>Ed</td>
+                        <td><span class="text-danger">EH</span> D</td>
+                    </tr>
+                    <tr>
+                        <td>ER</td>
+                        <td>hurt</td>
+                        <td>HH <span class="text-danger">ER</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>EY</td>
+                        <td>ate</td>
+                        <td><span class="text-danger">EY</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>F</td>
+                        <td>fee</td>
+                        <td><span class="text-danger">F</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>G</td>
+                        <td>green</td>
+                        <td><span class="text-danger">G</span> R IY N</td>
+                    </tr>
+                    <tr>
+                        <td>HH</td>
+                        <td>he</td>
+                        <td><span class="text-danger">HH</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>IH</td>
+                        <td>it</td>
+                        <td><span class="text-danger">IH</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>IY</td>
+                        <td>eat</td>
+                        <td><span class="text-danger">IY</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>JH</td>
+                        <td>gee</td>
+                        <td><span class="text-danger">JH</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>K</td>
+                        <td>key</td>
+                        <td><span class="text-danger">K</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>L</td>
+                        <td>lee</td>
+                        <td><span class="text-danger">L</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>M</td>
+                        <td>me</td>
+                        <td><span class="text-danger">M</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>N</td>
+                        <td>knee</td>
+                        <td><span class="text-danger">N</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>NG</td>
+                        <td>ping</td>
+                        <td>P IH <span class="text-danger">NG</span></td>
+                    </tr>
+                    <tr>
+                        <td>OW</td>
+                        <td>oat</td>
+                        <td><span class="text-danger">OW</span> T</td>
+                    </tr>
+                    <tr>
+                        <td>OY</td>
+                        <td>toy</td>
+                        <td>T <span class="text-danger">OY</span></td>
+                    </tr>
+                    <tr>
+                        <td>P</td>
+                        <td>pee</td>
+                        <td><span class="text-danger">P</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>R</td>
+                        <td>read</td>
+                        <td><span class="text-danger">R</span> IY D</td>
+                    </tr>
+                    <tr>
+                        <td>S</td>
+                        <td>sea</td>
+                        <td><span class="text-danger">S</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>SH</td>
+                        <td>she</td>
+                        <td><span class="text-danger">SH</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>T</td>
+                        <td>tea</td>
+                        <td><span class="text-danger">T</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>TH</td>
+                        <td>theta</td>
+                        <td><span class="text-danger">TH</span> EY T AH</td>
+                    </tr>
+                    <tr>
+                        <td>UH</td>
+                        <td>hood</td>
+                        <td>HH <span class="text-danger">UH</span> D</td>
+                    </tr>
+                    <tr>
+                        <td>UW</td>
+                        <td>two</td>
+                        <td>T <span class="text-danger">UW</span></td>
+                    </tr>
+                    <tr>
+                        <td>V</td>
+                        <td>vee</td>
+                        <td><span class="text-danger">V</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>W</td>
+                        <td>we</td>
+                        <td><span class="text-danger">W</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>Y</td>
+                        <td>yield</td>
+                        <td><span class="text-danger">Y</span> IY L D</td>
+                    </tr>
+                    <tr>
+                        <td>Z</td>
+                        <td>zee</td>
+                        <td><span class="text-danger">Z</span> IY</td>
+                    </tr>
+                    <tr>
+                        <td>ZH</td>
+                        <td>seizure</td>
+                        <td>S IY <span class="text-danger">ZH</span> ER</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Microphones</h2>
+    <table class="table mt-3">
+        <thead class="thead-light">
+            <th scope="col">Index</th>
+            <th scope="col">Name</th>
+            <th scope="col">Info</th>
+        </thead>
+        <tbody>
+            {% for info in devices %}
+            {% if info.get('maxInputChannels', 0) > 0 %}
+            <tr>
+                <td>{{ info['index'] }}</td>
+                <td>{{ info['name'] }}</td>
+                <td>
+                    <ul>
+                        {% for key, value in info|dictsort %}
+                        {% if key not in ['name', 'index'] %}
+                        <li>{{ key }} = {{ value }}</li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+
+ $("#word-form").submit(function(ev) {
+     ev.preventDefault();
+     $("#words").empty().append($("<option value=\"\">No pronunciations</option>"));
+     $("#not-in-dict").prop("hidden", false);
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/dictionary", true);
+     req.setRequestHeader("Content-Type", "text/plain");
+     req.addEventListener("load", function(resp) {
+         if (req.status == 200) {
+             var result = JSON.parse(resp.target.responseText);
+             if (result.dictionary) {
+                $("#not-in-dict").prop("hidden", true);
+             }
+
+             var pronounceList = result.pronounciations;
+             if (pronounceList.length > 0) {
+                 $("#words").empty();
+                 $.each(pronounceList, function(i, p) {
+                     $("#words").append($("<option></option>").text(p));
+
+                     if (i == 0) {
+                         // Copy first pronunciation over
+                         $("#pronounce-text").val(p);
+                     }
+                 });
+             }
+         }
+     });
+
+     var word = $("#pronounce-dict").val();
+     req.send(word);
+ });
+
+ $("#words").change(function() {
+     var word = $("#words").val();
+     if (word.length > 0) {
+         $("#pronounce-text").val(word);
+     }
+ });
+
+ $("#pronounce-form").submit(function(ev) {
+     ev.preventDefault();
+
+     $("#pronounce-response").prop("hidden", true);
+     $("#pronounce-response-text").text("");
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/pronounce", true);
+     req.setRequestHeader("Content-Type", "text/plain");
+     req.addEventListener("load", function(resp) {
+         if (req.status != 200) {
+             // Show error text
+             $("#pronounce-response").prop("hidden", false);
+             $("#pronounce-response-text").text(resp.target.responseText);
+         }
+     });
+
+     var word = $("#pronounce-text").val();
+     req.send(word);
+ });
+
+ $("#button-retrain").click(function() {
+     $("#button-retrain").removeClass("btn-primary");
+     $("#button-retrain").addClass("btn-info");
+
+     $("#train-spinner").prop("hidden", false);
+     $("#train-check").prop("hidden", true);
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/train-speech", true);
+     req.addEventListener("load", function(resp) {
+         $("#button-retrain").removeClass("btn-info");
+         $("#train-spinner").prop("hidden", true);
+
+         if (req.status == 200) {
+             $("#train-check").prop("hidden", false);
+             $("#button-retrain").addClass("btn-success");
+         } else {
+             // Show error text
+             $("button-retrain").addClass("btn-danger");
+             alert(resp.target.responseText);
+         }
+     });
+
+     req.send("");
+ });
+</script>
+{% endblock %}

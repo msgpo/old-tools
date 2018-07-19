@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container main-container pb-0">
+    <h1>About rhasspy</h1>
+    <img src="/img/rhasspy-big.png">
+</div>
+
+<hr>
+
+<div class="container">
+    <p>
+        rhasspy is a toolkit for developing custom voice assistants, hosted in
+        the <a href="https://www.home-assistant.io">Home Assistant</a> platform
+        (even on a <a href="https://www.raspberrypi.org">Raspberry Pi</a>).
+
+    </p>
+    <p>
+        This project was originally inspired by <a
+        href="https://jasperproject.github.io">Jasper</a>, a voice assistant
+        developed by students at Princeton. Like Jasper, rhasspy is open
+        source and built entirely from free software and intended to run with
+        off-the-shelf hardware. However, there are some important differences
+        that set rhasspy apart from Jasper and other voice assistants (Alexa,
+        Google Home, etc.):
+
+        <ul>
+            <li><b>Offline by Default</b>
+                <ul>
+                    <li>
+                        rhasspy is designed to run without an internet
+                        connection, and without requiring the user to sign up
+                        for any 3rd party services. The option is there,
+                        however, if better accuracy is needed (such as using the
+                        <a href="https://snowboy.kitt.ai/">snowboy</a> hotword
+                        detector).
+                    </li>
+                </ul>
+            </li>
+
+            <li><b>Hosted in Home Assistant</b>
+                <ul>
+                    <li>
+                        rhasspy is not a standalone piece of software, but exists
+                        as a set of resuable Home Assistant components. This
+                        gives rhasspy access to <a
+                        href="https://www.home-assistant.io/components/">hundreds
+                        of components</a> out of the box, and lets users
+                        incorporate only the pieces of rhasspy they're interested
+                        in.
+                    </li>
+                </ul>
+            </li>
+
+            <li><b>Modern Tools and Techniques</b>
+                <ul>
+                    <li>
+                        Jasper used pocketsphinx for keyword matching on a small
+                        set of user-defined keywords. rhasspy instead takes a
+                        (possibly large) set of <a
+                        href="https://nlu.rasa.com/dataformat.html">annotated
+                        training phrases</a>, and uses them to both generate a
+                        language model and train an intent recognizer. In order
+                        to accomodate flexible speech input, the generated
+                        language model is "mixed" with <a
+                        href="https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/US%20English/">CMU's
+                        base English model</a>.
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </p>
+</div>
+
+<hr>
+
+<div class="container">
+    <h2>Software</h2>
+
+    <p>
+        rhasspy uses the following libraries/tools:
+    </p>
+
+    <ul>
+        <li><b>Wake Word</b>
+            <ul>
+                <li><a href="https://github.com/cmusphinx/pocketsphinx">pocketsphinx</a></li>
+                <li><a href="https://github.com/mycroftai/mycroft-precise">mycroft-precise</a></li>
+                <li><a href="https://snowboy.kitt.ai">snowboy</a></li>
+            </ul>
+        </li>
+
+        <li><b>Speech to Text</b>
+            <ul>
+                <li><a href="https://github.com/cmusphinx/pocketsphinx">pocketsphinx</a> - speech to text engine</li>
+                <li><a href="https://webrtc.org">webrtcvad</a> - voice activity detection</li>
+                <li><a href="http://www.speech.sri.com/projects/srilm">SRILM</a> - language modeling toolkit</li>
+                <li><a href="https://github.com/AdolfVonKleist/Phonetisaurus">phonetisaurus</a> - guess pronunciations</li>
+                <li><a href="http://sox.sourceforge.net">sox</a> - covert audio formats</li>
+            </ul>
+        </li>
+
+        <li><b>Intent Recognition</b>
+            <ul>
+                <li><a href="https://nlu.rasa.ai/">rasaNLU</a> - intent recognizer</li>
+                <li><a href="https://spacy.io">spaCy</a> - natural language processing</li>
+            </ul>
+        </li>
+
+        <li><b>Text to Speech</b>
+            <ul>
+                <li><a href="https://pypi.org/project/pyttsx3/">pyTTSX3</a></li>
+                <li><a href="http://espeak.sourceforge.net">espeak</a></li>
+                <li><a href="https://en.wikipedial.org/wiki/SVOX">pico-tts</a></li>
+                <li><a href="http://mary.dfki.de">MaryTTS</a></li>
+            </ul>
+        </li>
+
+        <li><b>Miscellaneous</b>
+            <ul>
+                <li><a href="http://flask.pocoo.org">flask</a> - web server</li>
+                <li><a href="https://github.com/chumpler/pyhocon">pyhocon</a> - configuration</li>
+                <li><a href="https://people.csail.mit.edu/hubert/pyaudio">PyAudio</a> - recording audio</li>
+            </ul>
+        </li>
+
+    </ul>
+</div>
+
+<hr>
+
+<div class="container">
+    <i>Created by <a href="https://synesthesiam.com">Michael Hansen</a></i>
+</div>
+
+{% endblock %}

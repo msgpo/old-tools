@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container main-container">
+    <h1>Intent Recognition</h1>
+    <p>Figures out what you want to do.</p>
+    <img src="/img/intent.png">
+</div>
+<hr>
+<div class="container">
+    <p>
+        An <b>intent recognizer</b> takes a text command (which may have come from a
+        speech recognizer, text message, etc.) and tries to match it against a
+        know set of <em>intents</em>, such as looking for a restaurant or
+        playing a song. Each intent may have different <em>slots</em>: the kind
+        of food, name of the artist, etc. An intent recognizer must both
+        determine what the user wants to do (intent) and how they want to do it
+        (slots).
+    </p>
+
+    <p>
+        rhasspy uses <a href="https://nlu.rasa.ai/">Rasa NLU</a> for intent
+        recognition. This open source, Python-based system takes a set of
+        <em>examples</em> and trains a number of <em>classifiers</em> to do
+        intent recognition and slot filling simultaneously. Examples are
+        categorized by intent and tagged by the user to indicate which words
+        correspond to specific slots (Rasa calls them <em>entities</em>). For
+        example, the tagged sentence:
+    </p>
+
+    <p>
+        <tt>## intent:turn-lights-on-off</tt><br>
+        <tt>- turn [on](state) the [living room](location) light</tt>
+    </p>
+
+    <p>
+        belongs to the <tt>turn-lights-on-off</tt> intent, and has a
+        <span class="bg-dark text-light py-1 px-2">state</span> slot with the value
+        <span class="text-info">on</span> and a
+        <span class="bg-dark text-light py-1 px-2">location</span> slot with the value
+        <span class="text-info">on</span>.
+    </p>
+</div>
+<hr>
+<div class="container">
+    <div class="row mb-3">
+        <button id="button-retrain" type="button" class="btn btn-lg btn-primary">
+            <i id="train-spinner" class="fas fa-spinner" hidden></i>
+            <i id="train-check" class="fas fa-check" hidden></i>
+            <span class="ml-1">Re-Train Intent Recognizer</span>
+        </button>
+    </div>
+
+    <p>
+        rhasspy is looking for rasaNLU projects in: <tt>{{ rasa_cfg['project_dir'] }}</tt>.
+        The current project name is <tt>{{ rasa_cfg['project_name'] }}</tt>.
+    </p>
+
+    All of rhasspy's examples are shown below, taken from the following files:
+    <ul>
+        {% for path in example_files %}
+        <li><tt>{{ path }}</tt></li>
+        {% endfor %}
+    </ul>
+
+    {% for intent, examples in intent_examples|dictsort %}
+    <h2 class="mt-3"><i class="fas fa-cog"></i><span class="ml-3">{{ intent }}</span></h2>
+    <ol>
+        {% for example in examples|sort(attribute='text') %}
+        <li>{{ example['text'] }}
+            {% if example['entities'] %}
+            <ul class="mt-1 mb-2">
+                {% for entity in example['entities'] %}
+                <l1 class="mr-5">
+                    <span class="bg-dark text-light py-1 px-2">{{ entity['entity'] }}</span>
+                    <span class="ml-1 text-info">{{ entity['value'] }}</span>
+                </l1>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ol>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+ $("#button-retrain").click(function() {
+     $("#button-retrain").removeClass("btn-primary");
+     $("#button-retrain").addClass("btn-info");
+
+     $("#train-spinner").prop("hidden", false);
+     $("#train-check").prop("hidden", true);
+
+     var req = new XMLHttpRequest();
+     req.open("POST", "/train-intent", true);
+     req.addEventListener("load", function(resp) {
+         $("#button-retrain").removeClass("btn-info");
+         $("#train-spinner").prop("hidden", true);
+
+         if (req.status == 200) {
+             $("#train-check").prop("hidden", false);
+             $("#button-retrain").addClass("btn-success");
+         } else {
+             // Show error text
+             $("button-retrain").addClass("btn-danger");
+             alert(resp.target.responseText);
+         }
+     });
+
+     req.send("");
+ });
+</script>
+{% endblock %}

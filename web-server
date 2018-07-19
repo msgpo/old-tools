@@ -1,0 +1,20 @@
+#!/bin/bash
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+cd $DIR
+
+# Auto-detect CPU architecture (for bin/lib dirs)
+CPU_ARCH="$(lscpu | awk '/^Architecture/{print $2}')"
+
+# Prepend bin/lib to paths
+export PATH=$DIR/phonetisaurus/bin/$CPU_ARCH:$DIR/srilm/bin/$CPU_ARCH:$PATH
+export LD_LIBRARY_PATH=$DIR/phonetisaurus/lib/$CPU_ARCH:$LD_LIBRARY_PATH
+
+# Add directories used in config file
+export RHASSPY_TOOLS=$DIR
+
+# For the web server
+export FLASK_APP=app.py
+
+mkdir -p $DIR/data
+
+pipenv run flask run --host=0.0.0.0 --port=8080 "$@"

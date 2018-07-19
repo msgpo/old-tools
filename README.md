@@ -27,3 +27,72 @@ The available tools are:
 * `pico-tts` - text to speech
     * Should be available from your distribution's package repository (`sudo apt-get install libttspico-utils`)
     * If it's missing, install with `sudo dpkg -i *.deb`
+
+Web Server
+------------
+
+A small web server is included here to play around with the tools. This is not
+required to get rhasspy running inside Home Assistant, but can be useful for
+exploring how rhasppy works and understanding how it can be extended/customized.
+
+Before creating a virtual environment for the web server, make sure you have the necessary system packages installed:
+
+* General
+    * `build-essential`
+    * `git`
+* Python
+    * `python3`
+    * `python3-dev`
+    * `python3-pip`
+    * `python3-venv`
+* pocketsphinx
+    * `libasound2-dev`
+    * `libpulse-dev`
+    * `swig`
+* rasaNLU
+    * `libatlas-dev`
+    * `libatlas-base-dev`
+* rhasspy
+    * `libpicotts-utils`
+
+You can install them all at once with a single command:
+
+    sudo apt-get install build-essential \
+        python3 python3-dev python3-pip python3-venv \
+        libasound2-dev libpulse-dev swig \
+        libatlas-dev libatlas-base-dev \
+        libpicotts-utils
+
+Now, follow the instructions below to install the necessary Python libraries
+inside a virtual environment.
+
+1. Install `pipenv`:
+
+    sudo -H python3 -m pip install pipenv
+    
+2. Install Python dependencies:
+
+    cd rhasppy-tools
+    pipenv install
+    
+3. Install `snowboy`:
+
+    pipenv install https://github.com/Kitt-AI/snowboy/archive/v1.3.0.tar.gz
+    
+4. Install `spaCy` language model
+
+    pipenv run python -m spacy download en
+    
+5. Start web server:
+
+    ./web-server
+    
+6. Open a web browser and go to [http://localhost:8080](http://localhost:8080)
+
+Edit `web/rhasspy.conf` to change the settings for the web server.
+
+Training
+----------
+
+A small `train` script is provided to allow for command-line training. Edit
+`web/rhasspy.conf` to change the settings for training.

@@ -1,0 +1,18 @@
+[packages]
+
+flask = "*"
+pyhocon = "*"
+"pyttsx3" = "*"
+incremental = "*"
+requests = "*"
+"num2words" = "*"
+pyaudio = "*"
+pocketsphinx = "*"
+rasa-nlu = {extras = ["spacy"]}
+mycroft-precise = "*"
+"867858a" = {file = "https://github.com/Kitt-AI/snowboy/archive/v1.3.0.tar.gz"}
+
+
+[requires]
+
+python_version = "3.5"
