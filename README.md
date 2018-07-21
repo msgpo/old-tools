@@ -66,13 +66,14 @@ You can install them all at once with a single command:
 Now, follow the instructions below to install the necessary Python libraries
 inside a virtual environment.
 
-1. Install `pipenv`:
+1. Install [pipenv](https://docs.pipenv.org/):
 
     sudo -H python3 -m pip install pipenv
     
 2. Install Python dependencies:
 
     cd rhasppy-tools
+    
     pipenv install
     
 3. Install `snowboy`:
