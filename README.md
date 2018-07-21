@@ -49,6 +49,8 @@ Before creating a virtual environment for the web server, make sure you have the
     * `libasound2-dev`
     * `libpulse-dev`
     * `swig`
+* PyAudio
+    * `portaudio19-dev`
 * rasaNLU
     * `libatlas-dev`
     * `libatlas-base-dev`
@@ -60,6 +62,7 @@ You can install them all at once with a single command:
     sudo apt-get install build-essential \
         python3 python3-dev python3-pip python3-venv \
         libasound2-dev libpulse-dev swig \
+        portaudio19-dev \
         libatlas-dev libatlas-base-dev \
         libpicotts-utils
 
