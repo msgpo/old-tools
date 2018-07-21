@@ -66,29 +66,28 @@ You can install them all at once with a single command:
 Now, follow the instructions below to install the necessary Python libraries
 inside a virtual environment.
 
-1. Install [pipenv](https://docs.pipenv.org/):
+Install [pipenv](https://docs.pipenv.org/):
 
     sudo -H python3 -m pip install pipenv
     
-2. Install Python dependencies:
+Install Python dependencies:
 
     cd rhasppy-tools
-    
     pipenv install
     
-3. Install `snowboy`:
+Install `snowboy`:
 
     pipenv install https://github.com/Kitt-AI/snowboy/archive/v1.3.0.tar.gz
     
-4. Install `spaCy` language model
+Install `spaCy` language model:
 
     pipenv run python -m spacy download en
     
-5. Start web server:
+Start web server:
 
     ./web-server
     
-6. Open a web browser and go to [http://localhost:8080](http://localhost:8080)
+Open a web browser and go to [http://localhost:8080](http://localhost:8080)
 
 Edit `web/rhasspy.conf` to change the settings for the web server.
 
