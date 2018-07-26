@@ -56,6 +56,7 @@ Before creating a virtual environment for the web server, make sure you have the
     * `libatlas-base-dev`
 * rhasspy
     * `libpicotts-utils`
+    * `sox`
 
 You can install them all at once with a single command:
 
@@ -64,7 +65,7 @@ You can install them all at once with a single command:
         libasound2-dev libpulse-dev swig \
         portaudio19-dev \
         libatlas-dev libatlas-base-dev \
-        libpicotts-utils
+        libpicotts-utils sox
 
 Now, follow the instructions below to install the necessary Python libraries
 inside a virtual environment.
@@ -78,10 +79,6 @@ Install Python dependencies:
     cd rhasppy-tools
     pipenv install
     
-Install `snowboy`:
-
-    pipenv install https://github.com/Kitt-AI/snowboy/archive/v1.3.0.tar.gz
-    
 Install `spaCy` language model:
 
     pipenv run python -m spacy download en
@@ -92,7 +89,10 @@ Start web server:
     
 Open a web browser and go to [http://localhost:8080](http://localhost:8080)
 
-Edit `web/rhasspy.conf` to change the settings for the web server.
+Edit `web/rhasspy.conf` to change the settings for the web server. You'll
+probably want to change all the paths for `${RHASSPY_TOOLS}/data` to your
+`rhasspy-assistant/data` directory, so hitting the Train button in the web
+server will update your speech/intent models.
 
 Training
 ----------
