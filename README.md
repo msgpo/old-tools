@@ -51,12 +51,14 @@ Before creating a virtual environment for the web server, make sure you have the
     * `swig`
 * PyAudio
     * `portaudio19-dev`
-* rasaNLU
+* rasaNLU/snowboy
     * `libatlas-dev`
     * `libatlas-base-dev`
 * rhasspy
     * `libpicotts-utils`
     * `sox`
+* SRILM
+    * `libtcl8.6`
 
 You can install them all at once with a single command:
 
@@ -65,6 +67,7 @@ You can install them all at once with a single command:
         libasound2-dev libpulse-dev swig \
         portaudio19-dev \
         libatlas-dev libatlas-base-dev \
+        libtcl8.6 \
         libpicotts-utils sox
 
 Now, follow the instructions below to install the necessary Python libraries
