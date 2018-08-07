@@ -38,9 +38,21 @@ sure you have the right system packages installed:
     sudo apt-get install build-essential tcl-dev
 
 The next steps will depend on whether you're building on a Raspberry Pi or not.
-If you're on anything, it's likely the instructions in `INSTALL` will work just
-fine for you. I'd suggest following them, as anything I put here will eventually
-be out of date.
+If you are on a Pi, skip to the section below. If you're on anything else, it's
+likely the instructions in `INSTALL` will work just fine for you. This also may
+just work:
+
+    SRILM=`pwd` make World
+    
+Once that finishes, you'll have a sub-directory under `bin` with the name of
+your CPU architecture. You need to copy `ngram` and `ngram-count` over to
+wherever `rhasspy-tools` lives:
+
+    mkdir -p ~/rhasspy-tools/srilm/bin/$ARCH/
+    cp bin/$ARCH/ngram bin/$ARCH/ngram-count ~/rhasspy-tools/srilm/bin/$ARCH/
+    
+where `$ARCH` is probably `x86_64` if you're on a desktop/laptop/server. Run
+`uname -m` if you have no clue.
 
 ### Building on a Raspberry Pi
     
