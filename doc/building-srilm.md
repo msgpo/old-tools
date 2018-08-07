@@ -38,9 +38,9 @@ sure you have the right system packages installed:
     sudo apt-get install build-essential tcl-dev
 
 The next steps will depend on whether you're building on a Raspberry Pi or not.
-If you are on a Pi, skip to the section below. If you're on anything else, it's
-likely the instructions in `INSTALL` will work just fine for you. This also may
-just work:
+**If you are on a Pi, skip to the section below.** If you're on anything else,
+it's likely the instructions in `INSTALL` will work just fine for you. This also
+may just work:
 
     SRILM=`pwd` make World
     
