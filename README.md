@@ -1,5 +1,5 @@
 Tools for rhasspy Voice Assistant Toolkit
-==================================================
+===================================================
 
 These tools are needed by the [rhasspy voice
 assistant](https://github.com/synesthesiam/rhasspy-assistant). I have collected
@@ -19,7 +19,7 @@ The available tools are:
 * `srilm` - generates language model from training phrases
     * Source and license available at
       [http://www.speech.sri.com/projects/srilm/](http://www.speech.sri.com/projects/srilm/)
-    * Requires [modifications](https://github.com/G10DRAS/SRILM-on-RaspberryPi)
+    * Requires [modifications](https://github.com/synesthesiam/rhasspy-tools/tree/master/doc/building-srilm.md)
       to build on ARM systems (like the Raspberry Pi)
 * `pocketsphinx` - speech to text
     * Source available at [https://github.com/cmusphinx/pocketsphinx](https://github.com/cmusphinx/pocketsphinx)
