@@ -28,7 +28,7 @@ Grab my copy of the source code and get it started building:
     ./configure --enable-compact-fsts --enable-const-fsts --enable-far --enable-lookahead-fsts --enable-pdt
     make
     
-Consider raising a family and having a fulfilling career while you want. When it
+Consider raising a family and having a fulfilling career while you wait. When it
 finishes, copy the compiled libraries over to wherever `rhasspy-tools` is
 installed:
 
